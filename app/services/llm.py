@@ -5,7 +5,8 @@ Llm model handler, guarantees one instance/connection across application and pre
 from langchain_google_genai.llms import ChatGoogleGenerativeAI
 from abc import ABC
 
-from app.confs import LLM_MODEL
+from confs import LLM_MODEL, LLM_API_KEY_NAME
+from utils.get_secret import get_secret
 
 
 class __AbstractLlmModel(ABC):
@@ -27,6 +28,7 @@ class LlmModel(__AbstractLlmModel):
 
     def __init__(self) -> None:
         super().__init__()
+        self.__instance = self._init_instance()
 
     def get_instance(self) -> ChatGoogleGenerativeAI:
         if self.__instance:
@@ -35,7 +37,10 @@ class LlmModel(__AbstractLlmModel):
         return self._init_instance()
 
     def _init_instance(self) -> ChatGoogleGenerativeAI:
-        llm = ChatGoogleGenerativeAI(model=LLM_MODEL)
+        llm = ChatGoogleGenerativeAI(
+            model=LLM_MODEL, 
+            google_api_key=get_secret(LLM_API_KEY_NAME)
+        )
 
         return llm
 

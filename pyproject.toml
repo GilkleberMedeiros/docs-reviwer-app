@@ -9,6 +9,7 @@ dependencies = [
     "langchain>=0.3.27",
     "langchain-community>=0.3.27",
     "langchain-google-genai>=2.1.9",
+    "pypdf>=6.0.0",
     "python-decouple>=3.8",
     "streamlit>=1.48.0",
 ]

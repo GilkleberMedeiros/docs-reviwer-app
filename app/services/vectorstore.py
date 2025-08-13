@@ -6,25 +6,15 @@ exposition of only needed interface.
 from langchain_community.vectorstores.chroma import Chroma
 from langchain_google_genai.embeddings import GoogleGenerativeAIEmbeddings
 from abc import ABC
+import asyncio
 
-from .confs import (
+from confs import (
     EMBEDDINGS_API_KEY_NAME,
     EMBEDDINGS_MODEL,
     PERSIST_DIR,
     COLLECTION_NAME,
 )
-from .utils.get_secret import get_secret
-
-
-embeddings = GoogleGenerativeAIEmbeddings(
-    model=EMBEDDINGS_MODEL, google_api_key=get_secret(EMBEDDINGS_API_KEY_NAME)
-)
-
-vectorstore = Chroma(
-    collection_name=COLLECTION_NAME,
-    embedding_function=embeddings,
-    persist_directory=PERSIST_DIR,
-)
+from utils.get_secret import get_secret
 
 
 class __AbstractVectorDB(ABC):
@@ -41,11 +31,12 @@ class __AbstractVectorDB(ABC):
         raise NotImplementedError
 
 
-class __VectorDB(__AbstractVectorDB):
+class VectorDB(__AbstractVectorDB):
     __instance: Chroma
 
     def __init__(self):
         super().__init__()
+        self.__instance = self._init_instance()
 
     def get_instance(self) -> Chroma:
         if self.__instance:
@@ -54,6 +45,16 @@ class __VectorDB(__AbstractVectorDB):
         return self._init_instance()
 
     def _init_instance(self):
+        # Get or set an event loop. Needed By embeddings creation
+        try:
+            asyncio.get_running_loop()
+        except RuntimeError:
+            asyncio.set_event_loop(asyncio.new_event_loop())
+
+        embeddings = GoogleGenerativeAIEmbeddings(
+            model=EMBEDDINGS_MODEL, google_api_key=get_secret(EMBEDDINGS_API_KEY_NAME)
+        )
+
         vectorstore = Chroma(
             collection_name=COLLECTION_NAME,
             embedding_function=embeddings,
@@ -64,4 +65,4 @@ class __VectorDB(__AbstractVectorDB):
 
 
 def get_instance() -> Chroma:
-    return __VectorDB().get_instance()
+    return VectorDB().get_instance()
