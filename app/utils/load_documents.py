@@ -11,6 +11,7 @@ import os
 from pathlib import Path
 
 from confs import PROJECT_DIR
+from schemas.doc_metadata import DocMetadata
 
 
 LoaderFuncType = Callable[[str | Path], list[Document]]
@@ -55,8 +56,11 @@ def load_document(file: BytesIO) -> list[Document]:
                 f"LOADERS doesn't have a loader function for {file_ext} extension."
             )
 
+        metadata = DocMetadata(origin=file.name)
         loader = LOADERS[file_ext]
         loaded = loader(TMP_FILE_PATH)
+        for doc in loaded:
+            doc.metadata = metadata.model_dump()
 
     # Try remove when file used
     try:
