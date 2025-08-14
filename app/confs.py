@@ -22,3 +22,6 @@ EMBEDDINGS_MODEL = "models/gemini-embedding-001"
 # VectorDB confs
 COLLECTION_NAME = "docs"
 PERSIST_DIR = str(__PROJECT_DIR_OBJ_PATH.joinpath("/vectordata/").absolute())
+DEFAULT_K = 8  # Default num of results in a similarity_search query
+DEFAULT_CHUNK_SIZE = 800  # Default chunk_size for text splitters
+DEFAULT_CHUNK_OVERLAP = 200  # Default chunk_overlap for text splitters
