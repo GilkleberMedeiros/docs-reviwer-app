@@ -15,6 +15,7 @@ from confs import (
     COLLECTION_NAME,
 )
 from utils.get_secret import get_secret
+from .logging import Log, LEVEL
 
 
 class __AbstractVectorDB(ABC):
@@ -40,8 +41,20 @@ class VectorDB(__AbstractVectorDB):
 
     def get_instance(self) -> Chroma:
         if self.__instance:
+            log = Log(
+                LEVEL.WARNING,
+                "VectorDB.get_instance returned same instance!",
+                "services.vectorstore.VectorDB",
+            )
+            print(log)
             return self.__instance
 
+        log = Log(
+            LEVEL.WARNING,
+            "VectorDB.get_instance returned new instance!",
+            "services.vectorstore.VectorDB",
+        )
+        print(log)
         return self._init_instance()
 
     def _init_instance(self):

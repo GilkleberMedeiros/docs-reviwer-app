@@ -4,6 +4,7 @@ from streamlit.runtime.uploaded_file_manager import UploadedFile
 from io import BytesIO
 
 from services.vectorstore import get_instance
+from services.logging import Log, LEVEL
 from utils.load_documents import load_document
 from confs import DEFAULT_K, DEFAULT_CHUNK_SIZE, DEFAULT_CHUNK_OVERLAP
 
@@ -69,5 +70,12 @@ def single_query_docs(
         results.append(
             single_query_doc(query, file, chunk_size, chunk_overlap, num_results)
         )
+
+    log = Log(
+        LEVEL.INFO,
+        f"Got {len([item for sublist in results for item in sublist])}",
+        "utils.single_query_docs.single_query_docs",
+    )
+    print(log)
 
     return results
