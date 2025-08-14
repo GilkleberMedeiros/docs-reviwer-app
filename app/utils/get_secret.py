@@ -1,17 +1,19 @@
 import os
+from pathlib import Path
 from decouple import config
 from pydantic import SecretStr
 import getpass
 
+from confs import PROJECT_DIR
 from services.logging import Log, LEVEL
 
 
-BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
+BASE_DIR = Path(PROJECT_DIR)
 REL_LOG_ORIGIN = "utils.get_secret"
 
 
 def get_secret(name: str) -> SecretStr:
-    DOTENV_PATH = os.path.join(BASE_DIR, ".env")
+    DOTENV_PATH = BASE_DIR.joinpath(".env")
     LOG_ORIGIN = REL_LOG_ORIGIN + ".get_secret"
 
     log1 = Log(

@@ -8,6 +8,8 @@ from pathlib import Path
 __PROJECT_DIR_OBJ_PATH = Path(__file__).parent.parent.absolute()
 PROJECT_DIR = str(__PROJECT_DIR_OBJ_PATH)
 
+print("confs PROJECT DIR: ", PROJECT_DIR)
+
 # App confs
 ACCEPT_DOCS_FORMATS = [".pdf", ".csv", ".txt", ".docx"]
 
