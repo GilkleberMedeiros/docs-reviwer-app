@@ -69,9 +69,8 @@ if chat_input:
     status.write("Assembling prompt...")
     docs_str = ""
     if results:
-        for docs in results:
-            for doc in docs:
-                docs_str += doc.page_content + "\n"
+        for doc in results:
+            docs_str += doc.page_content + "\n"
 
     prompt = f"context: \n{docs_str}\n\nquestion: {query}"
 
