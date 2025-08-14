@@ -1,13 +1,15 @@
 import streamlit as st
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_core.documents import Document
 
 from confs import ACCEPT_DOCS_FORMATS
-from services.vectorstore import get_instance as get_vs_instance
 from services.llm import get_instance as get_llm_instance
-from utils import load_documents as ld
+from utils.single_query_docs import single_query_docs
 
+
+# App persistent states
 st.session_state["is_req_processing"] = False
+if "prev_chat_msg" not in st.session_state:
+    st.session_state["prev_chat_msg"] = ""
+
 st.container(
     horizontal_alignment="center",
     vertical_alignment="center",
@@ -19,43 +21,45 @@ chat_input = st.chat_input(
     file_type=ACCEPT_DOCS_FORMATS,
 )
 
-if chat_input:
+if st.session_state.get("prev_chat_msg"):
     status = st.status(
-        "Processing request...",
-        state="complete" if st.session_state["is_req_processing"] else "running",
+        (
+            "Processing request..."
+            if st.session_state["is_req_processing"]
+            else "Completed"
+        ),
+        state=("running" if st.session_state["is_req_processing"] else "complete"),
     )
+    with st.chat_message("assistant"):
+        st.write(st.session_state["prev_chat_msg"])
+
+if chat_input:
     files = chat_input.files
     query = chat_input.text
+
+    st.session_state["is_req_processing"] = True
+    status = st.status(
+        (
+            "Processing request..."
+            if st.session_state["is_req_processing"]
+            else "Waiting queries..."
+        ),
+        state=("running" if st.session_state["is_req_processing"] else "complete"),
+    )
     status.write("Got chat inputs...")
 
-    vectorstore = get_vs_instance()
-    doc_ids: list[list[str]] | None = None
-    results: list[Document] | None = None
+    results = []
     if files:
-        documents = ld.load_documents(files)  # type: ignore
-        status.write("Loaded files into documents...")
-
-        splitted: list[list[Document]] = []
-        splitter = RecursiveCharacterTextSplitter(
-            chunk_size=700,
-            chunk_overlap=200,
-        )
-
-        for doc in documents:
-            splitted.append(splitter.split_documents(doc))
-        status.write("Splitted documents...")
-
-        doc_ids = [vectorstore.add_documents(doc) for doc in splitted]
-
-        results = vectorstore.similarity_search(query, k=8)
-        status.write("Got relevant documents...")
+        results = single_query_docs(query, files)
+        status.write("Got relevant docs...")
 
     # mount prompt
     status.write("Assembling prompt...")
     docs_str = ""
     if results:
-        for doc in results:
-            docs_str += doc.page_content + "\n"
+        for docs in results:
+            for doc in docs:
+                docs_str += doc.page_content + "\n"
 
     prompt = f"context: \n{docs_str}\n\nquestion: {query}"
 
@@ -63,11 +67,10 @@ if chat_input:
     llm = get_llm_instance()
     res = llm.invoke(prompt)
 
-    print("Res: ", res.text())
     if res.content:  # type: ignore
         with st.chat_message("assistant"):
-            st.write(res.text())  # type: ignore
+            st.write(res.text())
 
-    if doc_ids:
-        [vectorstore.delete(docs_id) for docs_id in doc_ids]
-    st.session_state["is_req_processing"] = True
+    st.session_state["is_req_processing"] = False
+    st.session_state["prev_chat_msg"] = res.text()
+    st.rerun()
