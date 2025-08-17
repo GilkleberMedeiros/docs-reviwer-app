@@ -68,15 +68,23 @@ def single_query_docs(
     num_results: int = DEFAULT_K,
 ) -> list[Document]:
     """
-    Does similarity search on documents that will last only one search.
-    This is basically a for around [single_query_doc]. see [single_query_doc] docs
-    to see more details on params, returns, raises, etc...
+    Does similarity search on files that will last only one search.
+
+    Args:
+        query: query string to use on similarity search.
+        file: file to load and get results.
+        chunk_size: chunk_size param to text splitters, defaults to app [DEFAULT_CHUNK_SIZE].
+        chunk_overlap: chunk_overlap param to text splitters, defaults to app [DEFAULT_CHUNK_OVERLAP].
+        num_results: number of results to return from similarity search, defaults to app [DEFAULT_K].
+
+    Retuns:
+        The list of results from similarity search.
     """
     results: list[Document] = []
     try:
+        vectorstore = get_instance()
+        doc_ids: list[str] = []
         for file in files:
-            vectorstore = get_instance()
-
             documents = load_document(file)
             splitter = RecursiveCharacterTextSplitter(
                 chunk_size=chunk_size,
@@ -87,9 +95,9 @@ def single_query_docs(
 
             doc_ids = vectorstore.add_documents(splitted)
 
-            results = vectorstore.similarity_search(query, k=num_results)
-
-            vectorstore.delete(doc_ids)
+        # Querying all files once
+        results = vectorstore.similarity_search(query, k=num_results)
+        vectorstore.delete(doc_ids)
     except Exception as e:
         raise Exception(
             f"Unknow exception when managing single query docs!\nException: \n{e}"
