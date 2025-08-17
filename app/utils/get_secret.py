@@ -1,3 +1,4 @@
+import streamlit as st
 import os
 from pathlib import Path
 from decouple import config
@@ -16,6 +17,26 @@ def get_secret(name: str) -> SecretStr:
     DOTENV_PATH = BASE_DIR.joinpath(".env")
     LOG_ORIGIN = REL_LOG_ORIGIN + ".get_secret"
 
+    log7 = Log(
+        LEVEL.INFO,
+        f"Trying to get secret {name} from streamlit secrets.",
+        LOG_ORIGIN,
+    )
+    print(log7)
+
+    st.secrets.load_if_toml_exists()
+    has_st_secret = st.secrets.has_key(name)
+    if has_st_secret:
+        log4 = Log(
+            LEVEL.SUCCESS,
+            f"Successful retrived secret {name} from streamlit secrets!",
+            LOG_ORIGIN,
+        )
+        print(log4)
+
+        st_secret = st.secrets.get(name)
+        return SecretStr(str(st_secret))
+
     log1 = Log(
         LEVEL.INFO,
         f"Trying to get secret {name} from os system env variables.",
@@ -25,12 +46,12 @@ def get_secret(name: str) -> SecretStr:
 
     env_secret = os.environ.get(name, None)
     if env_secret:
-        log4 = Log(
+        log8 = Log(
             LEVEL.SUCCESS,
             f"Successful retrived secret {name} from os system env variables!",
             LOG_ORIGIN,
         )
-        print(log4)
+        print(log8)
 
         return SecretStr(env_secret)
 
